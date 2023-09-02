@@ -55,4 +55,5 @@ func RegisterRoutes(r *gin.Engine) {
 	router.DELETE("/delete/:id/:rev", controller.StuDelete)
 
 	router.POST("/file/upload", controller.UploadFile)
+	router.GET("/file/get", controller.GetFile)
 }

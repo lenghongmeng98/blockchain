@@ -7,9 +7,11 @@ import (
 	"blockchain/response"
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-kivik/kivik/v3"
+	"github.com/google/uuid"
 )
 
 var body request.StuRequest
@@ -137,6 +139,57 @@ func StuDelete(c *gin.Context) {
 }
 
 func UploadFile(c *gin.Context) {
-	// file, _ := c.FormFile("file")
 
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get file from form"})
+		panic(err)
+	}
+
+	// Open the uploaded file
+	uploadedFile, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open uploaded file"})
+		panic(err)
+	}
+	defer uploadedFile.Close()
+
+	att := &kivik.Attachment{
+		Content:     uploadedFile,
+		Filename:    file.Filename,
+		ContentType: file.Header.Get("Content-Type"),
+	}
+
+	doc := conn.DBConn.Get(context.Background(), "document_id", kivik.Options{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get rev id"})
+		panic(err)
+	}
+	revID := doc.Rev
+
+	// Put the attachment into the document
+	_, err = conn.DBConn.PutAttachment(context.Background(), uuid.NewString(), revID, att)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to put attachment"})
+		panic(err)
+	}
+
+	fmt.Print(att)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Attachment uploaded successfully"})
+}
+
+func GetFile(c *gin.Context) {
+
+	id := c.Param("id")
+	filename := c.Param("filename")
+
+	// Fetch the attachment
+	attachment, err := conn.DBConn.GetAttachment(context.Background(), id, filename, kivik.Options{})
+	if err != nil {
+		fmt.Printf("Failed to get attachment: %v\n", err)
+		return
+	}
+
+	fmt.Println(attachment)
 }
