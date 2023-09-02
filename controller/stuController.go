@@ -5,8 +5,10 @@ import (
 	"blockchain/model"
 	"blockchain/request"
 	"blockchain/response"
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -198,5 +200,18 @@ func GetFile(c *gin.Context) {
 	contentType := attachment.ContentType
 	c.Header("Content-Type", contentType)
 
-	fmt.Println(attachment)
+	// Read the attachment's content into a buffer
+	buffer := new(bytes.Buffer)
+	_, err = io.Copy(buffer, attachment.Content)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read attachment content"})
+		return
+	}
+
+	// Write the buffer's contents to the response writer
+	_, err = c.Writer.Write(buffer.Bytes())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to copy attachment content to response"})
+		return
+	}
 }
