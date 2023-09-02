@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-kivik/kivik/v3"
-	"github.com/google/uuid"
 )
 
 var body request.StuRequest
@@ -138,8 +137,6 @@ func StuDelete(c *gin.Context) {
 }
 
 func UploadFile(c *gin.Context) {
-	file, _ := c.FormFile("file")
-
-	conn.DBConn.PutAttachment(context.TODO(), uuid.NewString(), file.Filename, "multipart/form-data")
+	// file, _ := c.FormFile("file")
 
 }
