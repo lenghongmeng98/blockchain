@@ -184,12 +184,19 @@ func GetFile(c *gin.Context) {
 	id := c.Param("id")
 	filename := c.Param("filename")
 
+	fmt.Println(id)
+	fmt.Println(filename)
+
 	// Fetch the attachment
 	attachment, err := conn.DBConn.GetAttachment(context.Background(), id, filename, kivik.Options{})
 	if err != nil {
-		fmt.Printf("Failed to get attachment: %v\n", err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Attachment not found"})
 		return
 	}
+
+	// Set the Content-Type header based on the attachment's content type
+	contentType := attachment.ContentType
+	c.Header("Content-Type", contentType)
 
 	fmt.Println(attachment)
 }
